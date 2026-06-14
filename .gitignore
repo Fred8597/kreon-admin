@@ -1,0 +1,29 @@
+# Dépendances
+node_modules/
+
+# Build
+dist/
+dist-ssr/
+build/
+
+# Variables d'environnement
+.env
+.env.local
+.env.production.local
+
+# Logs
+*.log
+npm-debug.log*
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Editor
+.vscode/
+.idea/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
