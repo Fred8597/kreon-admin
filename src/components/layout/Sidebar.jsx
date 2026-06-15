@@ -10,6 +10,8 @@ import {
   Gift,
 } from "lucide-react";
 import { Sparkles } from "lucide-react"
+import { Hash } from "lucide-react"
+import { Settings as SettingsIcon } from "lucide-react"
 
 const menuItems = [
   { path: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
@@ -20,6 +22,8 @@ const menuItems = [
   { path: "/news", label: "Actualités", icon: Newspaper },
   { path: "/giftcodes", label: "Codes Cadeaux", icon: Gift },
   { path: "/tirages", label: "Tirages", icon: Sparkles },
+  { path: "/transaction-references", label: "Inventaire MoMo", icon: Hash },
+  { path: "/settings", label: "Paramètres", icon: SettingsIcon },
 ];
 
 export default function Sidebar() {

@@ -13,6 +13,8 @@ import News from "./pages/News";
 import UserDetail from "./pages/UserDetail";
 import GiftCodes from "./pages/GiftCodes";
 import Tirages from "./pages/Tirages";
+import TransactionReferences from "./pages/TransactionReferences";
+import Settings from "./pages/Settings";
 
 // Composant qui protège les routes
 function ProtectedRoute({ children }) {
@@ -77,6 +79,8 @@ function App() {
           <Route path="/news" element={<ProtectedRoute><News /></ProtectedRoute>} />
           <Route path="/giftcodes" element={<ProtectedRoute><GiftCodes /></ProtectedRoute>} />
           <Route path="/tirages" element={<ProtectedRoute><Tirages /></ProtectedRoute>} />
+          <Route path="/transaction-references" element={<ProtectedRoute><TransactionReferences /></ProtectedRoute>} />
+          <Route path="/settings" element={<ProtectedRoute><Settings /></ProtectedRoute>} />
           <Route path="*" element={<Navigate to="/login" replace />} />
         </Routes>
       </BrowserRouter>
