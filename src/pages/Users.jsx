@@ -10,6 +10,9 @@ import {
   UserCheck,
   DollarSign,
   X,
+  KeyRound,
+  Copy,
+  CheckCircle2,
 } from "lucide-react";
 import { formatXAF, formatDateTime } from "../utils/format";
 import toast from "react-hot-toast";
@@ -28,6 +31,11 @@ export default function Users() {
   const [modalSolde, setModalSolde] = useState(null);
   const [montant, setMontant] = useState("");
   const [description, setDescription] = useState("");
+
+  // ===== Modal Reset Password =====
+  const [modalReset, setModalReset] = useState(null);
+  const [resetting, setResetting] = useState(false);
+  const [nouveauPassword, setNouveauPassword] = useState("");
 
   useEffect(() => {
     chargerUsers();
@@ -108,6 +116,37 @@ export default function Users() {
     } catch (error) {
       toast.error(error.response?.data?.message || "Erreur");
     }
+  };
+
+  // ===== RESET PASSWORD =====
+  const ouvrirModalReset = (user) => {
+    setModalReset(user);
+    setNouveauPassword("");
+  };
+
+  const confirmerReset = async () => {
+    setResetting(true);
+    try {
+      const { data } = await api.put(
+        `/admin/users/${modalReset._id}/reset-password`
+      );
+      setNouveauPassword(data.nouveauPassword);
+      toast.success("Mot de passe réinitialisé ✅");
+    } catch (error) {
+      toast.error(error.response?.data?.message || "Erreur");
+    } finally {
+      setResetting(false);
+    }
+  };
+
+  const copierPassword = () => {
+    navigator.clipboard.writeText(nouveauPassword);
+    toast.success("Mot de passe copié !");
+  };
+
+  const fermerModalReset = () => {
+    setModalReset(null);
+    setNouveauPassword("");
   };
 
   // Badge rôle
@@ -250,6 +289,14 @@ export default function Users() {
                       >
                         <DollarSign size={16} />
                       </button>
+                      {/* ===== BOUTON RESET PASSWORD ===== */}
+                      <button
+                        onClick={() => ouvrirModalReset(u)}
+                        style={{ ...styles.actionBtn, color: "#8b5cf6" }}
+                        title="Réinitialiser mot de passe"
+                      >
+                        <KeyRound size={16} />
+                      </button>
                       <select
                         value={u.role}
                         onChange={(e) => changerRole(u._id, e.target.value)}
@@ -354,6 +401,104 @@ export default function Users() {
           </div>
         </div>
       )}
+
+      {/* ===== MODAL RESET PASSWORD ===== */}
+      {modalReset && (
+        <div style={styles.modalOverlay} onClick={fermerModalReset}>
+          <div style={styles.modal} onClick={(e) => e.stopPropagation()}>
+            <div style={styles.modalHeader}>
+              <h3 style={styles.modalTitle}>
+                🔐 Réinitialiser le mot de passe
+              </h3>
+              <button onClick={fermerModalReset} style={styles.closeBtn}>
+                <X size={20} />
+              </button>
+            </div>
+
+            {!nouveauPassword ? (
+              <>
+                <div style={styles.warningBox}>
+                  <p style={styles.warningText}>
+                    ⚠️ Vous êtes sur le point de réinitialiser le mot de passe de :
+                  </p>
+                  <p style={styles.userToReset}>
+                    {modalReset.nom}
+                  </p>
+                  <p style={styles.warningSubtext}>
+                    📞 {modalReset.telephone} • ✉️ {modalReset.email}
+                  </p>
+                </div>
+
+                <div style={styles.infoBox}>
+                  <p style={styles.infoText}>
+                    Un mot de passe temporaire sera généré. <strong>Notez-le et transmettez-le au user en sécurité.</strong>
+                    Il devra le changer immédiatement après reconnexion.
+                  </p>
+                </div>
+
+                <div style={styles.modalActions}>
+                  <button onClick={fermerModalReset} style={styles.cancelBtn}>
+                    Annuler
+                  </button>
+                  <button
+                    onClick={confirmerReset}
+                    disabled={resetting}
+                    style={{
+                      ...styles.resetBtn,
+                      opacity: resetting ? 0.6 : 1,
+                      cursor: resetting ? "not-allowed" : "pointer",
+                    }}
+                  >
+                    {resetting ? "Réinitialisation..." : "🔐 Réinitialiser"}
+                  </button>
+                </div>
+              </>
+            ) : (
+              <>
+                <div style={styles.successBox}>
+                  <CheckCircle2 size={32} color="#10b981" />
+                  <p style={styles.successTitle}>
+                    Mot de passe réinitialisé !
+                  </p>
+                  <p style={styles.successSub}>
+                    Transmettez ce mot de passe temporaire à {modalReset.nom} :
+                  </p>
+                </div>
+
+                {/* PASSWORD AFFICHÉ */}
+                <div style={styles.passwordDisplay}>
+                  <span style={styles.passwordText}>{nouveauPassword}</span>
+                  <button onClick={copierPassword} style={styles.copyBtn}>
+                    <Copy size={16} color="#10b981" /> Copier
+                  </button>
+                </div>
+
+                <div style={styles.instructionsBox}>
+                  <p style={styles.instructionTitle}>📢 Message à envoyer au user :</p>
+                  <div style={styles.messageBox}>
+                    Bonjour {modalReset.nom}, votre mot de passe a été réinitialisé.
+                    <br />
+                    Connectez-vous avec : <strong>{nouveauPassword}</strong>
+                    <br />
+                    Changez-le immédiatement depuis Profil → Mot de passe.
+                  </div>
+                </div>
+
+                <div style={styles.warningBoxFinal}>
+                  ⚠️ Ce mot de passe ne sera plus visible après fermeture de cette fenêtre. Notez-le bien !
+                </div>
+
+                <button
+                  onClick={fermerModalReset}
+                  style={{ ...styles.confirmBtn, width: "100%" }}
+                >
+                  J'ai bien noté, fermer
+                </button>
+              </>
+            )}
+          </div>
+        </div>
+      )}
     </div>
   );
 }
@@ -420,9 +565,7 @@ const styles = {
     width: "100%",
     borderCollapse: "collapse",
   },
-  thead: {
-    background: "rgba(10,15,13,0.5)",
-  },
+  thead: { background: "rgba(10,15,13,0.5)" },
   th: {
     padding: "14px 16px",
     textAlign: "left",
@@ -432,28 +575,11 @@ const styles = {
     textTransform: "uppercase",
     letterSpacing: "0.5px",
   },
-  tr: {
-    borderTop: "1px solid rgba(16,185,129,0.05)",
-  },
-  td: {
-    padding: "14px 16px",
-    color: "#fff",
-    fontSize: "13px",
-  },
-  text: {
-    color: "#fff",
-    fontSize: "13px",
-  },
-  textSmall: {
-    color: "#94a3b8",
-    fontSize: "11px",
-    marginTop: "2px",
-  },
-  userCell: {
-    display: "flex",
-    alignItems: "center",
-    gap: "10px",
-  },
+  tr: { borderTop: "1px solid rgba(16,185,129,0.05)" },
+  td: { padding: "14px 16px", color: "#fff", fontSize: "13px" },
+  text: { color: "#fff", fontSize: "13px" },
+  textSmall: { color: "#94a3b8", fontSize: "11px", marginTop: "2px" },
+  userCell: { display: "flex", alignItems: "center", gap: "10px" },
   avatar: {
     width: "36px",
     height: "36px",
@@ -465,16 +591,8 @@ const styles = {
     color: "#0a0f0d",
     fontWeight: "bold",
   },
-  userName: {
-    color: "#fff",
-    fontSize: "13px",
-    fontWeight: "600",
-  },
-  userInvites: {
-    color: "#94a3b8",
-    fontSize: "11px",
-    marginTop: "2px",
-  },
+  userName: { color: "#fff", fontSize: "13px", fontWeight: "600" },
+  userInvites: { color: "#94a3b8", fontSize: "11px", marginTop: "2px" },
   codeBadge: {
     padding: "4px 8px",
     background: "rgba(6,182,212,0.1)",
@@ -491,11 +609,7 @@ const styles = {
     fontSize: "11px",
     fontWeight: "bold",
   },
-  actions: {
-    display: "flex",
-    gap: "6px",
-    alignItems: "center",
-  },
+  actions: { display: "flex", gap: "6px", alignItems: "center" },
   actionBtn: {
     width: "30px",
     height: "30px",
@@ -517,16 +631,8 @@ const styles = {
     fontSize: "11px",
     cursor: "pointer",
   },
-  loading: {
-    padding: "40px",
-    textAlign: "center",
-    color: "#10b981",
-  },
-  empty: {
-    padding: "40px",
-    textAlign: "center",
-    color: "#64748b",
-  },
+  loading: { padding: "40px", textAlign: "center", color: "#10b981" },
+  empty: { padding: "40px", textAlign: "center", color: "#64748b" },
   pagination: {
     padding: "16px",
     display: "flex",
@@ -544,10 +650,8 @@ const styles = {
     cursor: "pointer",
     fontSize: "13px",
   },
-  pageInfo: {
-    color: "#fff",
-    fontSize: "13px",
-  },
+  pageInfo: { color: "#fff", fontSize: "13px" },
+  // ===== MODAL =====
   modalOverlay: {
     position: "fixed",
     inset: 0,
@@ -573,25 +677,15 @@ const styles = {
     alignItems: "center",
     marginBottom: "20px",
   },
-  modalTitle: {
-    color: "#fff",
-    fontSize: "18px",
-    fontWeight: "bold",
-  },
+  modalTitle: { color: "#fff", fontSize: "18px", fontWeight: "bold" },
   closeBtn: {
     background: "transparent",
     border: "none",
     color: "#94a3b8",
     cursor: "pointer",
   },
-  modalInfo: {
-    color: "#94a3b8",
-    fontSize: "13px",
-    marginBottom: "20px",
-  },
-  modalField: {
-    marginBottom: "16px",
-  },
+  modalInfo: { color: "#94a3b8", fontSize: "13px", marginBottom: "20px" },
+  modalField: { marginBottom: "16px" },
   label: {
     display: "block",
     color: "#94a3b8",
@@ -608,11 +702,7 @@ const styles = {
     fontSize: "14px",
     outline: "none",
   },
-  modalActions: {
-    display: "flex",
-    gap: "12px",
-    marginTop: "24px",
-  },
+  modalActions: { display: "flex", gap: "12px", marginTop: "24px" },
   cancelBtn: {
     flex: 1,
     padding: "12px",
@@ -632,5 +722,114 @@ const styles = {
     color: "#0a0f0d",
     cursor: "pointer",
     fontWeight: "bold",
+  },
+  // ===== RESET PASSWORD =====
+  warningBox: {
+    padding: "16px",
+    background: "rgba(139,92,246,0.08)",
+    border: "1px solid rgba(139,92,246,0.3)",
+    borderRadius: "12px",
+    marginBottom: "14px",
+    textAlign: "center",
+  },
+  warningText: { color: "#cbd5e1", fontSize: "13px", marginBottom: "10px" },
+  userToReset: {
+    color: "#8b5cf6",
+    fontSize: "20px",
+    fontWeight: "bold",
+    marginBottom: "6px",
+  },
+  warningSubtext: { color: "#94a3b8", fontSize: "12px" },
+  infoBox: {
+    padding: "12px",
+    background: "rgba(245,158,11,0.08)",
+    border: "1px solid rgba(245,158,11,0.25)",
+    borderRadius: "10px",
+    marginBottom: "14px",
+  },
+  infoText: { color: "#fbbf24", fontSize: "12px", lineHeight: 1.5 },
+  resetBtn: {
+    flex: 1,
+    padding: "12px",
+    background: "linear-gradient(135deg, #8b5cf6, #a78bfa)",
+    border: "none",
+    borderRadius: "10px",
+    color: "#fff",
+    fontWeight: "bold",
+  },
+  // Success
+  successBox: {
+    padding: "20px",
+    background:
+      "linear-gradient(135deg, rgba(16,185,129,0.15), rgba(52,211,153,0.05))",
+    border: "1px solid rgba(16,185,129,0.4)",
+    borderRadius: "14px",
+    marginBottom: "16px",
+    textAlign: "center",
+    display: "flex",
+    flexDirection: "column",
+    alignItems: "center",
+    gap: "8px",
+  },
+  successTitle: { color: "#10b981", fontSize: "16px", fontWeight: "bold" },
+  successSub: { color: "#86efac", fontSize: "12px" },
+  passwordDisplay: {
+    display: "flex",
+    alignItems: "center",
+    gap: "10px",
+    padding: "16px",
+    background: "rgba(16,185,129,0.1)",
+    border: "2px dashed rgba(16,185,129,0.5)",
+    borderRadius: "12px",
+    marginBottom: "16px",
+  },
+  passwordText: {
+    flex: 1,
+    color: "#10b981",
+    fontSize: "20px",
+    fontWeight: "bold",
+    fontFamily: "monospace",
+    letterSpacing: "2px",
+    textAlign: "center",
+  },
+  copyBtn: {
+    display: "flex",
+    alignItems: "center",
+    gap: "6px",
+    padding: "8px 14px",
+    background: "rgba(16,185,129,0.15)",
+    border: "1px solid rgba(16,185,129,0.4)",
+    borderRadius: "8px",
+    color: "#10b981",
+    fontSize: "12px",
+    fontWeight: "bold",
+    cursor: "pointer",
+  },
+  instructionsBox: { marginBottom: "16px" },
+  instructionTitle: {
+    color: "#86efac",
+    fontSize: "12px",
+    fontWeight: "bold",
+    marginBottom: "8px",
+  },
+  messageBox: {
+    padding: "12px",
+    background: "rgba(10,15,13,0.5)",
+    border: "1px solid rgba(16,185,129,0.15)",
+    borderRadius: "10px",
+    color: "#cbd5e1",
+    fontSize: "12px",
+    lineHeight: 1.6,
+    fontStyle: "italic",
+  },
+  warningBoxFinal: {
+    padding: "10px",
+    background: "rgba(239,68,68,0.08)",
+    border: "1px solid rgba(239,68,68,0.3)",
+    borderRadius: "8px",
+    color: "#fca5a5",
+    fontSize: "11px",
+    textAlign: "center",
+    marginBottom: "14px",
   },
 };
