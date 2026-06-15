@@ -1,11 +1,12 @@
 import axios from "axios";
 
-// URL de base du backend
-const API_URL = "http://localhost:5000/api";
+// URL de base du backend (depuis variable d'environnement Vercel)
+const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5000/api";
 
 // Instance Axios
 const api = axios.create({
   baseURL: API_URL,
+  timeout: 60000, // 60 secondes (important pour Render qui se réveille)
   headers: {
     "Content-Type": "application/json",
   },

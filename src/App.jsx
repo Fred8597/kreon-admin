@@ -1,3 +1,4 @@
+import { useEffect } from "react";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { Toaster } from "react-hot-toast";
 import { AdminAuthProvider, useAdminAuth } from "./context/AdminAuthContext";
@@ -19,13 +20,15 @@ function ProtectedRoute({ children }) {
 
   if (loading) {
     return (
-      <div style={{
-        minHeight: "100vh",
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
-        color: "#10b981"
-      }}>
+      <div
+        style={{
+          minHeight: "100vh",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          color: "#10b981",
+        }}
+      >
         Chargement...
       </div>
     );
@@ -36,6 +39,20 @@ function ProtectedRoute({ children }) {
 }
 
 function App() {
+  // ===== PING ANTI-VEILLE RENDER (toutes les 14 min) =====
+  useEffect(() => {
+    const baseURL = import.meta.env.VITE_API_URL || "http://localhost:5000/api";
+    const pingURL = baseURL.replace("/api", "/");
+
+    const ping = () => {
+      fetch(pingURL).catch(() => {});
+    };
+
+    ping();
+    const interval = setInterval(ping, 14 * 60 * 1000);
+    return () => clearInterval(interval);
+  }, []);
+
   return (
     <AdminAuthProvider>
       <BrowserRouter>
